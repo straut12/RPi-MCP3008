@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# this MCP3008 adc checks for a change in previous value before updating
-# can adjust noise level
+# This MCP3008 adc checks for a change in previous value before updating.
+# It will only return a value if current-prev (delta) reading is above noise
+# threshold. if evalNoise is set to True it will output the delta for evaluation
+# and help determine what threshold should be used to trigger an update.
 import os, busio, digitalio, board
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -23,7 +25,7 @@ class mcp3008:
     self.sensorChanged = False     # flag to determine if sensor changed more than noise level
     self.sampleInterval = sampleInterval  # interval in seconds to check for update
     self.time0 = time()   # time 0
-    
+
   def valmap(self, value, istart, istop, ostart, ostop):
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
 
@@ -41,16 +43,17 @@ class mcp3008:
           self.sensorChanged = False
           self.lastRead = self.sensorAve
           return self.sensorDelta   # return sensor noise data
-          
+
       if self.sensorChanged:  # if sensor has updated return value (and if not evaluating noise)
           self.adcValue1 = self.valmap(self.sensorAve, 0, 65535, 0, self.vref) # 4mV change is approx 500
           self.lastRead = self.sensorAve
           self.sensorChanged = False
           return self.adcValue1
-      
+
 if __name__ == "__main__":
   adc1 = mcp3008(5, 0.25, 400, 10, False) # vref, delayCheck, noiseThreshold, numOfSamples, noise evaluation
   while True:
     voltage1 = adc1.getValue()
     if voltage1 is not None:
-      print('{0:1.2f}'.format(voltage1))
+      print('Voltage: {0:1.2f}'.format(voltage1))
+
