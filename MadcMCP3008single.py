@@ -15,8 +15,6 @@ class mcp3008:
     cs = digitalio.DigitalInOut(board.D22) # create the cs (chip select)
     mcp = MCP.MCP3008(spi, cs) # create the mcp object
     self.chan0 = AnalogIn(mcp, MCP.P0) # create analog input channel on pins
-    #print('Raw ADC Value: ', chan0.value)
-    #print('ADC Voltage: ' + str(chan0.voltage) + 'V')
     self.lastRead = self.chan0.value       # initialize last measurement
     self.noiseLevel = noiseLevel     # noise level we want to ignore
     self.aveSamp = aveSamp
