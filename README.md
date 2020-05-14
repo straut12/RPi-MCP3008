@@ -4,7 +4,7 @@ module for ADC using MCP3008 and RPi
 
 Difference between single and multiple version.
 
-'multiple' version can read 1-8 channels but does not have the noise evaluation option.  Will read on specified time interval.
+'multiple' version can read 1-8 channels but does not have the noise evaluation option.  Will report voltage if current-prevous reading is above the noiseThreshold.
 
 'single' version uses only one channel but has option to enable noise evaluation to see how much signal is changing between reads (current - previous).  This helps find a value to set the noiseLevel (threshold) so only updates are made when the value changes instead of a specific time interval.
 
