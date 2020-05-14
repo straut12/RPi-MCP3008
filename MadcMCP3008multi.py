@@ -48,7 +48,7 @@ class mcp3008:
       return self.adcValue
       
 if __name__ == "__main__":
-  adc = mcp3008(8, 5, 1, 10) # numOfChannels, vref, delay, numOfSamples
+  adc = mcp3008(2, 5, 0.5, 10) # numOfChannels, vref, delay, numOfSamples
   voltageFormatted = []
   while True:
     voltage = adc.getValue()

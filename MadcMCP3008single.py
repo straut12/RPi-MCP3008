@@ -49,7 +49,7 @@ class mcp3008:
           return self.adcValue1
 
 if __name__ == "__main__":
-  adc1 = mcp3008(5, 0.25, 400, 10, False) # vref, delayCheck, noiseThreshold, numOfSamples, noise evaluation
+  adc1 = mcp3008(5, 0.1, 300, 10, False) # vref, delayCheck, noiseThreshold, numOfSamples, noise evaluation
   while True:
     voltage1 = adc1.getValue()
     if voltage1 is not None:
