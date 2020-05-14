@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# this MCP3008 adc is multi channel and just reads adc per interval
-# there is NO check for previous state
-# there is NO comparison between current-previous to compare to noise threshold
+# This MCP3008 adc is multi channel.  If any channel has a delta (current-previous) that is above the
+# noise threshold then the voltage from all channels will be returned.
 import os, busio, digitalio, board
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
