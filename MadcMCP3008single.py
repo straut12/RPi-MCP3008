@@ -9,14 +9,14 @@ from adafruit_mcp3xxx.analog_in import AnalogIn
 from time import time
 
 class mcp3008:
-  def __init__(self, vref, sampleInterval=0.1, noiseLevel=350, aveSamp= 10, evalNoise=False):
+  def __init__(self, vref, sampleInterval=0.1, noiseThreshold=350, evalNoise=False, aveSamp= 10):
     self.vref = vref
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the spi bus
     cs = digitalio.DigitalInOut(board.D22) # create the cs (chip select)
     mcp = MCP.MCP3008(spi, cs) # create the mcp object
     self.chan0 = AnalogIn(mcp, MCP.P0) # create analog input channel on pins
     self.lastRead = self.chan0.value       # initialize last measurement
-    self.noiseLevel = noiseLevel     # noise level we want to ignore
+    self.noiseThreshold = noiseThreshold     # noise level we want to ignore
     self.aveSamp = aveSamp
     self.sensor = [x for x in range(0, self.aveSamp)]  # create sensor list with ave sampling
     self.evaluateNoise = evalNoise  # flag for outputting noise for evaluation
@@ -35,7 +35,7 @@ class mcp3008:
       self.sensorAve = sum(self.sensor)/len(self.sensor)
       self.sensorDelta = abs(self.sensorAve - self.lastRead) # calculate delta from last read
 
-      if self.sensorDelta > self.noiseLevel and not self.evaluateNoise:
+      if self.sensorDelta > self.noiseThreshold and not self.evaluateNoise:
           self.sensorChanged = True  # if delta is greater than noise then sensor updated
       elif self.evaluateNoise:    # if evaluating noise then ignore sensor update
           self.sensorChanged = False
@@ -49,7 +49,7 @@ class mcp3008:
           return self.adcValue1
 
 if __name__ == "__main__":
-  adc1 = mcp3008(5, 0.1, 300, 10, False) # vref, delayCheck, noiseThreshold, numOfSamples, noise evaluation
+  adc1 = mcp3008(5, 0.1, 300, False) # vref, delayCheck, noiseThreshold, noise evaluation, numOfSamples
   while True:
     voltage1 = adc1.getValue()
     if voltage1 is not None:

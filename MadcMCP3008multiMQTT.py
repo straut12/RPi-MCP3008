@@ -9,7 +9,7 @@ from time import time
 import paho.mqtt.client as mqtt
 
 class mcp3008:
-  def __init__(self, numOfChannels, vref, sampleInterval=1, numOfSamples= 10):
+  def __init__(self, numOfChannels, vref, sampleInterval=1, noiseThreshold=350, numOfSamples= 10):
     self.vref = vref
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the spi bus
     cs = digitalio.DigitalInOut(board.D22) # create the cs (chip select)
@@ -23,10 +23,13 @@ class mcp3008:
                  AnalogIn(mcp, MCP.P5),
                  AnalogIn(mcp, MCP.P6),
                  AnalogIn(mcp, MCP.P7)]
-    #print('Raw ADC Value: ', chan0.value)
-    #print('ADC Voltage: ' + str(chan0.voltage) + 'V')
+    self.noiseThreshold = noiseThreshold
+    self.sensorChanged = False
     self.numOfSamples = numOfSamples
     self.sensorAve = [x for x in range(self.numOfChannels)]
+    self.sensorLastRead = [x for x in range(self.numOfChannels)]
+    for x in range(self.numOfChannels): # initialize the first read for comparison later
+      self.sensorLastRead[x] = self.chan[x].value
     self.adcValue = [x for x in range(self.numOfChannels)]
     self.sensor = [[x for x in range(0, self.numOfSamples)] for x in range(0, self.numOfChannels)]
     self.sampleInterval = sampleInterval  # interval in seconds to check for update
@@ -42,10 +45,15 @@ class mcp3008:
         for i in range(self.numOfSamples):  # get samples points from analog pin and average
           self.sensor[x][i] = self.chan[x].value
         self.sensorAve[x] = sum(self.sensor[x])/len(self.sensor[x])
+        if abs(self.sensorAve[x] - self.sensorLastRead[x]) > self.noiseThreshold:
+          self.sensorChanged = True
+        self.sensorLastRead[x] = self.sensorAve[x]
         self.adcValue[x] = self.valmap(self.sensorAve[x], 0, 65535, 0, self.vref) # 4mV change is approx 500
         #print('chan: {0} value: {1:1.2f}'.format(x, self.adcValue[x]))
-      self.adcValue = ["%.2f"%item for item in self.adcValue]
-      return self.adcValue
+      if self.sensorChanged:
+        self.adcValue = ["%.2f"%pin for pin in self.adcValue] #format and send final adc results
+        self.sensorChanged = False
+        return self.adcValue
       
 if __name__ == "__main__":
     #=======   SETUP MQTT =================#
@@ -81,17 +89,14 @@ if __name__ == "__main__":
     mqtt_client.connect(MQTT_ADDRESS, 1883)  # connect to the mqtt
     mqtt_client.loop_start()   # other option is client.loop_forever() but it is blocking
 
-    adc = mcp3008(8, 5, 2, 10) # numOfChannels, vref, delay, numOfSamples
+    adc = mcp3008(2, 5, 0.1, 350) # numOfChannels, vref, delay, noiseThreshold
+    mcp3008D = {}
     while True:
-      voltage = adc.getValue()
+      voltage = adc.getValue() # returns a list with the voltage for each pin that was passed in mcp3008
       if voltage is not None:
-          mcp3008D = {"fa0":str(voltage[0]),
-                      "fa1":str(voltage[1]),
-                      "fa2":str(voltage[2]),
-                      "fa3":str(voltage[3]),
-                      "fa4":str(voltage[4]),
-                      "fa5":str(voltage[5]),
-                      "fa6":str(voltage[6]),
-                      "fa7":str(voltage[7])}
-          mcp3008MQTT = json.dumps(mcp3008D)
-          mqtt_client.publish(topic_pub, mcp3008MQTT)
+        i = 0
+        for pin in voltage:                               # create dictionary with voltage from each pin
+          mcp3008D['a' + str(i) + 'f'] = str(voltage[i])  # key=pin:value=voltage 
+          i += 1                                          # will convert dict-to-json for easy MQTT publish of all pin at once
+        mcp3008MQTT = json.dumps(mcp3008D)                # convert dictionary to json
+        mqtt_client.publish(topic_pub, mcp3008MQTT)       # publish voltage values
