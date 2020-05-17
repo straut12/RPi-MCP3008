@@ -58,8 +58,6 @@ class mcp3008:
 if __name__ == "__main__":
     #=======   SETUP MQTT =================#
     MQTT_ADDRESS = '10.0.0.22'
-    #MQTT_USER = 'chawn1272'
-    #MQTT_PASSWORD = 'dewberry2233'
     MQTT_TOPIC = 'countchocula/mcp3008/+'  # + means one or more occurrence
     MQTT_REGEX = 'countchocula/([^/]+)/([^/]+)'  #regular expression.  ^ means start with
     MQTT_CLIENT_ID = 'countchocula'
